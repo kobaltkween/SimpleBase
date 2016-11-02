@@ -152,23 +152,6 @@ abstract class Model {
         throw new \Exception("Invalid data: $name");
     }
     
-    /* Get all of the joined information, add it to output 
-     * and set object properties, just in case need to do more 
-     * @return: void
-     */
-    protected function getAssocObjs() {
-        if (!empty($this->table->joinTables)) {
-            foreach($this->table->joinTables as $table) {
-                $model = $table->joinedTable->name;
-                $obj = new $model();
-                $propName = $obj->table->name . "s";
-                // By  default, sort by "name" property
-                $this->output[$propName] = $obj->getAllJoined($this->table);
-                $this->$propName = $this->output[$propName];
-            }
-        }
-    }
-    
     /* Get a single row of data from the table
      * @param $input: array, the data from the controller
      * @return: object, $this->output

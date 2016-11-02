@@ -59,7 +59,7 @@ abstract class View {
      * @param $code: int, the HTTP response code from the controller
      * @param $label: string, the label for the HTTP response code from the controller
      */
-    public function __construct($output, $code, $label) {
+    public function __construct($output, $code, $label, $errorMessage = "") {
         $this->data = $output;
         $this->code = $code;
         $this->label = $label;

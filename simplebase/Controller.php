@@ -58,23 +58,9 @@ class Controller {
     
     /* Whether the view is speaking HTML or JSON
      * @var string
-     public $viewFormat;*/
-     
-    /* The resultant data that the controller sends out to the view
-     * @var JSON object
      */
-    public $res;
-    
-    /* Whether or not result is empty
-     * @var boolean
-     */
-    public $empty = true;
+     public $format
      
-     /* An error boolean for whether something has gone wrong or not
-      * @var boolean
-      */
-    public $error = false;
-    
     /* An error message, that describes what has gone wrong
      * @var string
      */
@@ -94,7 +80,7 @@ class Controller {
     /* The data to send back as a response
      * @var string
      */
-     public $data = null;
+     public $output = null;
      
     /* The view that the controller sends the response to
      * @var View
@@ -110,21 +96,22 @@ class Controller {
         $this->urlElements = $router->urlElements;
         // Set the format, it's only HTML if it's local, JSON if it's not
         $this->format = ($router->local) ? "html" : "json";
-        $this->getInput($router->getVars);
-        $this->setMethod($router->method);
-        $this->setModel();
-            
-        /*if($this->method != "GET") {
-            $this->getInput();
+        try {
+            $this->getInput($router->getVars);
+            $this->setMethod($router->method);
+            $this->setMV();
+            $this->setAction();
+            $this->setOutput();
+        } catch (\Exception $e) {
+            // Catch any type of exception raised
+            $this->errorMessage = $e->getMessage();
         }
-        $this->setModel();
-        $this->setAction();
-        $this->setData();
-        $this->respond();*/
+        $this->respond();
     }
     
     /* Set the parameters to those sent in the body of the request
-     * @return void
+     * @return: void
+     * @throws: \Exception 
      */
     protected function getInput($getVars) {
         $parameters = $getVars;
@@ -155,9 +142,7 @@ class Controller {
                     $this->notAccepted();
             }
         }
-        if (!$this->error) {
-            $this->params = $parameters;
-        }
+        $this->params = $parameters;
     }
     
     /* Parses model name out of an URL element, 
@@ -199,8 +184,11 @@ class Controller {
      * This method is dependent on the application API and its endpoints
      * This method should work for a basic API, but will probably need to be overrriden by subclasses
      * @return: void
+     * @throws: \Exception
      */
     protected function setMV() {
+        // Set the possible/allowed models for this controller
+        $this->models = ["Image", "Page"];  // Just a placeholder
         // If there's only one element in the URL, get a list of that model
         if (count($this->urlElements) == 1) {
             $modelName = $this->getModelName($this->urlElements[0]);
@@ -220,7 +208,7 @@ class Controller {
         if (in_array(strtolower($modelName), $this->models)) {
             $this->modelName = $modelName;
             $this->model = new $this->modelName();
-            if ($this->router->local) {
+            if ($this->format == "html") {
                 $this->viewName = $modelName . $viewSuffix;
             } else {
                 $this->viewName = "JSONView";
@@ -234,6 +222,7 @@ class Controller {
      * It just covers the CRUD actions, and assumes method names based on the base Model class
      * This method is very likely to be overriden by subclasses as well
      * @return: void
+     * @throws: \Exception
      */
     public function setAction() {
         $haveId = (array_key_exists("id", $this->params) && $this->params["id"] >= 1) ? true : false;
@@ -246,14 +235,8 @@ class Controller {
                 }
                 break;
             case "POST":
-                $this->action = "insert";
-                break;
             case "UPDATE":
-                if ($haveId) {
-                    $this->action = "insert";
-                } else {
-                    $this->notAllowed();
-                }
+                $this->action = "insert";
                 break;
             case "DELETE":
                 if ($haveId) {
@@ -275,36 +258,33 @@ class Controller {
      * override this in subclasses to fit the specific needs of an app
      * and its models.
      * @return: void
+     * @throws: FilterExcept, DbExcept, or \Exception
      */
-    protected function setData() {
+    protected function setOutput() {
         if ($this->action !== null) {
             $method = $this->action;
-            try {
-                $this->data = $this->model->$method($this->params);
-                if ($this->method == "GET") {
-                    if (empty($this->data)) {
-                        if (array_key_exists("id", $this->params)) {
-                            $this->notFound();
-                        } else {
-                            // Asked for a full listing, and got no results
-                            $this->noContent();
-                        }
+            $this->output = $this->model->$method($this->params);
+            if ($this->method == "GET") {
+                if (empty($this->output)) {
+                    if (array_key_exists("id", $this->params)) {
+                        $this->notFound();
                     } else {
-                        // Got results from a get request
-                        $this->success();
+                        // Asked for a full listing, and got no results
+                        $this->noContent();
                     }
-                } else if ($this->method == "POST") {
-                    // Successfully entered new row(s) in the database
-                    $this->created();
                 } else {
-                    $this->noContent();
+                    // Got results from a get request
+                    $this->success();
                 }
-            } catch (\Exception $e) {
-                $this->badRequest();
-                $this->errorMessage = $e->getMessage();
+            } else if ($this->method == "POST") {
+                // Successfully entered new row(s) in the database
+                $this->created();
+            } else {
+                $this->noContent();
             }
-            
-        } 
+        } else {
+            $this->notAllowed();
+        }
     }
     
     /* Call the appropriate view - Definitely needs to be overriden
@@ -312,19 +292,15 @@ class Controller {
      * HTML has multiple views, based on the model name
      * @return: void
      */
-    protected function respond() {
-        if ($this->format == "json") {
-            $this->view = "JSONView";
-        } else {
-            // Figure out the view name from the model name
-            $this->view = $this->modelName . "View";
-        }
+    public function respond() {
+        $view = $this->viewName;
+        $this->view = new $view($this->output, $this->responseCode, $this->responseLabel, $this->errorMessage);
+        $this->view->render();
     }
     /* Method for successful content request
      * @return: void
      */
     protected function success() {
-        $this->error = false;
         $this->responseCode = 200;
         $this->responseLabel = "OK";
     }
@@ -333,7 +309,6 @@ class Controller {
      * @return: void
      */
     protected function created() {
-        $this->error = false;
         $this->responseCode = 201;
         $this->responseLabel = "Created";
     }
@@ -342,63 +317,68 @@ class Controller {
      * @return: void
      */
     protected function noContent() {
-        $this->error = false;
         $this->responseCode = 204;
         $this->responseLabel = "No Content";
     }
     
     /* Method for response when executing the action has raised an exception (for instance, illegal input)
      * @return: void
+     * @throws: \Exception
      */
     protected function badRequest() {
-        $this->error = true;
         $this->responseCode = 400;
         $this->responseLabel = "Bad request";
+        throw new \Exception("Invalid request");
     }
     
-    /* Method for response when the user is authenticated but doesn't have necessary permissions
+    /* Method for response when the user isn't authenticated
      * @return: void
+     * @throws: \Exception
      */
     protected function notAuthenticated() {
-        $this->error = true;
         $this->responseCode = 401;
         $this->responseLabel = "Unauthorized Request";
+        throw new \Exception("You need to login to access that resource.");
     }
     
     /* Method for response when the user is authenticated but doesn't have necessary permissions
      * @return: void
+     * @throws: \Exception
      */
     protected function notPermitted() {
-        $this->error = true;
         $this->responseCode = 403;
         $this->responseLabel = "Forbidden Request";
+        throw new \Exception("You don't have permission to access the requested resource.");
     }
     
     /* Method for response when there's no resource found at the ID
      * @return: void
+     * @throws: \Exception
      */
     protected function notFound() {
-        $this->error = true;
         $this->responseCode = 404;
         $this->responseLabel = "Not Found";
+        throw new \Exception("Resource not found. Please check the URL.");
     }
     
     /* Method for response when the user tries something that isn't allowed
      * @return: void
+     * @throws: \Exception
      */
     protected function notAllowed() {
-        $this->error = true;
         $this->responseCode = 405;
         $this->responseLabel = "Method Not Allowed";
+        throw new \Exception("Your request is not allowed by this application.");
     }
     
     /* Method for response when the user sends a content type that isn't allowed
      * @return: void
+     * @throws: \Exception
      */
     protected function notAccepted() {
-        $this->error = true;
         $this->responseCode = 406;
         $this->responseLabel = "Not Acceptable";
+        throw new \Exception("Your request isn't in an acceptable format.");
     }
 }
 ?>

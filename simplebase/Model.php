@@ -265,7 +265,6 @@ abstract class Model {
             $this->dbm->connect();
         }
         $res = $this->dbm->getJoined($this->table, $joinTable, $otherTable, $id);
-        $this->dbm->close();
     }    
     
     /* A simple method to check if a value exists in the input array, and to return it if it does
@@ -287,7 +286,6 @@ abstract class Model {
         $this->input = $input;
         // Filter the input
         $this->filterInput();
-        // Make sure that there's no id
         if (!$this->dbm->connected) {
             $this->dbm->connect();
         }

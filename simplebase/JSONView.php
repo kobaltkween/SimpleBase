@@ -15,11 +15,11 @@ class JSONView extends View {
         // Remove header just in case
         header_remove();
         http_response_code($this->code);
-        if (!empty($this->output)) {
+        if (!empty($this->data)) {
             // headers for not caching the results, if necessary
             // header('Cache-Control: no-cache, must-revalidate');    
             header('Content-Type: application/json; charset=utf8');
-            echo json_encode($this->output);
+            echo json_encode($this->data);
         }
     }
 }

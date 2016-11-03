@@ -106,7 +106,6 @@ class Controller {
             // Catch any type of exception raised
             $this->errorMessage = $e->getMessage();
         }
-        $this->respond();
     }
     
     /* Set the parameters to those sent in the body of the request
@@ -290,12 +289,12 @@ class Controller {
     /* Call the appropriate view - Definitely needs to be overriden
      * JSON has one view - turns the database response to JSON
      * HTML has multiple views, based on the model name
-     * @return: void
+     * @return: View, the view made from the controller
      */
     public function respond() {
         $view = $this->viewName;
         $this->view = new $view($this->output, $this->responseCode, $this->responseLabel, $this->errorMessage);
-        $this->view->render();
+        return $this->view;
     }
     /* Method for successful content request
      * @return: void

@@ -16,12 +16,17 @@ class DataHolder {
      * @var array
      */
     public $rows  = array();
+    
+    /* The database manager to handle the data uploading
+     * @var DbManager
+     */
+    public $dbm
 
     /* Constructor sets the columns from input
      * @param $colString: string, comma and space separated string of columns
      */
-    function __construct($colString) {
-        $this->cols = explode(", ",  $colString);
+    function __construct($model) {
+        $this->model = $model;
     }
 
     /* Assumes value input as array  or a single value (string, integer, etc.)
@@ -33,7 +38,7 @@ class DataHolder {
         $row = [];
         if (is_array($vals)) {
             $i = 0;
-            while ($i < count($this->cols)) {
+            while ($i < count($this->model->columns)) {
                 $row[$this->cols[$i]] = $vals[$i];
                 $i++;
             }
@@ -41,5 +46,19 @@ class DataHolder {
             $row[$this->cols[0]] = $vals;
         }
         $this->rows[] = $row;
+    }
+    
+    /* Upload the data in the rows
+     * @return: boolean
+     * @throws: DbExcept, if the DbManager has a problem
+     */
+    function upload() {
+        foreach($this->rows as $row) {
+            $this->model->insert($row);
+        }
+    }
+    
+    function emptyRows() {
+        $this->rows = array();
     }
 }

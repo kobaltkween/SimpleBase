@@ -99,7 +99,7 @@ class Controller {
         try {
             $this->getInput($router->getVars);
             $this->setMethod($router->method);
-            $this->setMV();
+            $this->setMV($router->dbm);
             $this->setAction();
             $this->setOutput();
         } catch (\Exception $e) {
@@ -182,10 +182,11 @@ class Controller {
     /* A simple function for figuring out the model and the view based on the smart URL
      * This method is dependent on the application API and its endpoints
      * This method should work for a basic API, but will probably need to be overrriden by subclasses
+     * @param: DbManager
      * @return: void
      * @throws: \Exception
      */
-    protected function setMV() {
+    protected function setMV($dbm) {
         // Set the possible/allowed models for this controller
         $this->models = ["Image", "Page"];  // Just a placeholder
         // If there's only one element in the URL, get a list of that model
@@ -206,7 +207,7 @@ class Controller {
         }
         if (in_array(strtolower($modelName), $this->models)) {
             $this->modelName = $modelName;
-            $this->model = new $this->modelName();
+            $this->model = new $this->modelName($this->router->dbm);
             if ($this->format == "html") {
                 $this->viewName = $modelName . $viewSuffix;
             } else {

@@ -42,14 +42,16 @@ abstract class Model {
     protected $condVals = array();
     
     /* The constructor, which sets up the database manager, gets the columns
+     * @param $dbm: DbManager
      */
-    public function __construct() {
+    public function __construct($dbm) {
         // Set the table properties first
         $this->setBase();
-        $this->dbm = new DbManager();
-        $this->dbm->connect();
+        $this->dbm = $dbm;
+        if (!$this->dbm->connected) {
+            $this->dbm->connect();
+        }
         $this->columns = $this->dbm->getCols($this->table);
-        $this->dbm->close();
     }
     
     /* A stub for setting tables and children, to be overridden in subclasses
@@ -59,29 +61,53 @@ abstract class Model {
         // Set the relevant table properties here
     }
     
-    /* A filter input function that's just here to demonstrate how to filter input
+    /* A filter get input function that's just here to demonstrate how to filter input for get requests
      * Specific model subclasses will need to override this to handle particular fields
      * @return: void
      * @throws: FilterExcept (from the filters) or \Exception
      */
-    protected function filterInput() {
+    protected function filterGetParam() {
         foreach ($this->input as $k => $v) {
-            if (in_array($k, ["id", "limAmt", "limOffset"]) {
-                $v = $this->filterInt($v, $k, false);
-                if ($v <= 0 && $k != "limOffset") {
-                    $this->invalid($k);
-                } 
-            } else if ($k == "sort") {
-                $v = $this->filterSort($v);
-                $this->table->sort = $v;
-            } else if ($k == "sortDir") {
-                $v = $this->filterSortDir($v);
-                $this->table->sortDir = $v;
-            } else {
-                // Treat everything else as unrequired text
-                $v = filterText($v, $k);
+            switch($k) {
+                case "id":
+                case "limAmt":
+                case "limOffset":
+                    $v = $this->filterInt($v, $k, false);
+                    if ($v <= 0 && $k != "limOffset") {
+                        $this->invalid($k);
+                    }
+                    break;
+                case "sort":
+                    $v = $this->filterSort($v);
+                    $this->table->sort = $v;
+                    break;
+                case "sortDir":
+                    $v = $this->filterSortDir($v);
+                    $this->table->sortDir = $v;
+                    break;
+                default: 
+                    $v = $this->filterText($v, $k);
             }
-            $this->input[$k] = $v;
+        }
+    }
+    
+    /* A filter get input function that's just here to demonstrate how to filter input for update or insert requests
+     * Specific model subclasses will need to override this to handle particular fields
+     * @return: void
+     * @throws: FilterExcept (from the filters) or \Exception
+     */
+    protected function filterInParam() {
+        foreach ($this->input as $k => $v) {
+            switch($k) {
+                case "id":
+                    $v = $this->filterInt($v, $k, false);
+                    if ($v <= 0) {
+                        $this->invalid($k);
+                    }
+                    break;
+                default: 
+                    $v = $this->filterText($v, $k);
+            }
         }
     }
     
@@ -106,6 +132,7 @@ abstract class Model {
     /* A text filter method for most regular content.  It just removes illegal content
      * @param $dirty: string
      * @return: string
+     * @throws: \Exception
      */
     protected function filterText($dirty, $name, $req = false) {
         $tFilter = new TextFilter();
@@ -141,7 +168,22 @@ abstract class Model {
         $sortFilter->setWhitelist(["ASC", "DESC");
         $clean = $sortFilter->filter($dirty);
     }
-        
+    
+    /* A filter for filtering HTML input
+     * While this example doestn't use it, it's common enough that many models will
+     * @param $dirty: string, unfiltered HTML input
+     * @return: string, clean HTML input
+     * @throws: \Exception
+     */
+    protected function filterHTML($dirty, $name, $req = false) {
+        $hf = new HTMLFilter();
+        $clean = $hf->filter($dirty);
+        if ($req && empty($clean)) { 
+            $this->invalid($name);
+        } else {
+            return $clean;
+        }
+    }
     
     /* A function to throw Exceptions when necessary
      * @param $name: string, the name of the invalid value
@@ -161,7 +203,7 @@ abstract class Model {
         // Set the input
         $this->input = $input;
         // Make sure the input is valid - in this case, the id
-        $this->filterInput();
+        $this->filterGetParam();
         // Make sure the table has been set, or raise an exception
         if ($this->table !== null) {
             if (!$this->dbm->connected) {
@@ -189,6 +231,7 @@ abstract class Model {
      * @throws: FilterExcept from the filtering, DbExcept (if the query fails), or \Exception
      */
     public function getAllSimple() {
+        // Shouldn't be any input, so no need to filter
         // Make sure the table has been set, or raise an exception
         if ($this->table !== null) {
             if (!$this->dbm->connected) {
@@ -210,7 +253,7 @@ abstract class Model {
         $this->input = $input;
         // Make sure the input is valid - in this case, just search conditions
         if (!empty($this->input)) {
-            $this->filterInput();
+            $this->filterGetParam();
             // Deal with limits, the keys to look for are set in the Router class
             $limAmt =  $this->setValue("limAmt", 0);
             $limOffset = $this->setValue("limOffset", 0);
@@ -285,7 +328,7 @@ abstract class Model {
         // Set the input
         $this->input = $input;
         // Filter the input
-        $this->filterInput();
+        $this->filterInParam();
         if (!$this->dbm->connected) {
             $this->dbm->connect();
         }

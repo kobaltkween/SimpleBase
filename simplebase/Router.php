@@ -54,16 +54,23 @@ class Router {
      */
     public static $ignore = ["css", "js", "images"];
     
+    /* The database manager for the app, passed to the router
+     * That way other classes down the line can access it, 
+     * and use the central DBM for connections
+     * @var DbManager
+     */
+    public $dbm;
     
     /* Constructor, sets the local value to true or false, converts the smart URL path to an array, 
      * sets only the allowed get variables, and sets the request method from the $_SERVER array
      * @param $local: boolean
      * @param $path: string, the relative path requested
      */
-    public function __construct($local, $path) {
+    public function __construct($local, $path, $dbm) {
         $this->local = $local;
         $this->setProperties($path);
         $this->routeRequest();
+        $this->dbm = $dbm
     }
     
     

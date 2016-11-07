@@ -165,7 +165,7 @@ abstract class Model {
     protected function filterSortDir($dirty) {
         $dirty = strtoupper($dirty);
         $sortFilter = new DataFilter();
-        $sortFilter->setWhitelist(["ASC", "DESC");
+        $sortFilter->setWhitelist(["ASC", "DESC"]);
         $clean = $sortFilter->filter($dirty);
     }
     
@@ -212,7 +212,7 @@ abstract class Model {
             // Get the id
             $id = $this->input["id"];
             if (empty($this->table->fkCols)) {
-                $this->output = $this->dbm->getSimple($this->table, $id)
+                $this->output = $this->dbm->getSimple($this->table, $id);
             } else {
                 $this->output = $this->dbm->getAssoc($this->table, $id);
             }
@@ -222,7 +222,7 @@ abstract class Model {
             }
             return $this->output;
         } else {
-            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.")
+            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.");
         }
     }
     
@@ -239,7 +239,7 @@ abstract class Model {
             }
             $this->output = $this->dbm->getSimple($this->table);
          } else {
-            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.")
+            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.");
         }
     }
     
@@ -276,7 +276,7 @@ abstract class Model {
             }
             return $this->output;
         } else {
-            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.")
+            throw new \Exception("Cannot retrieve data.  Model's table has not been defined.");
         }
     }
 
@@ -338,7 +338,7 @@ abstract class Model {
             if (!empty($this->children)) {
                 foreach($this->children as $child => $table) {
                     // Just delete existing joins first for simplicity
-                    $thisFK = array_search($this->table, $table->fkCols)
+                    $thisFK = array_search($this->table, $table->fkCols);
                     $cond  = "$thisFK = :id";
                     $res = $this->dbm->deleteRows($table, $id, $cond);
                     if ($res) {
@@ -350,10 +350,9 @@ abstract class Model {
                         throw new \Exception("Could not delete previous joins");
                     }                    
                 }
+            }
         } else {
             $this->output = $this->dbm->insertRow("insert", $this->table, $this->input);
         }
     }
 }
-
-?>

@@ -79,4 +79,3 @@ function printArr($arr, $count = 0) {
         }
     }
 }
-?>

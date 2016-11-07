@@ -32,7 +32,7 @@ abstract class View {
     /* The path to main nav file for the page
      * @var string
      */
-    public $nav
+    public $nav;
      
      /* The path to main body file of the page if the request is successful
       * @var string
@@ -76,7 +76,7 @@ abstract class View {
         // Just a placeholder CSS name
         $this->css = CSS_DIR . "viewName.css";
         // Just a placeholder, assuming the data is an object and has a property "title"
-        $this->title = $this->data->title
+        $this->title = $this->data->title;
         $this->header = UI_DIR . "header.php";
         $this->nav = UI_DIR . "navigation.php";
         if ($this->code <= 300) {

@@ -70,7 +70,7 @@ class Router {
         $this->local = $local;
         $this->setProperties($path);
         $this->routeRequest();
-        $this->dbm = $dbm
+        $this->dbm = $dbm;
     }
     
     

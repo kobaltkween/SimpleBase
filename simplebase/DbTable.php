@@ -66,7 +66,7 @@ class DbTable {
      * @return: void
      */
     public function setSortDir($dir) {
-        $dir = strtoupper($dir)
+        $dir = strtoupper($dir);
         if ($dir == "ASC" || $dir == "DESC") {
             $this->sortDir = $dir;
         }
@@ -81,4 +81,3 @@ class DbTable {
         $this->aliases[$col] = $alias;
     }
 }
-?>

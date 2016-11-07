@@ -191,8 +191,8 @@ class DbManager {
             if ($cond != "") {
                 $qb->addCond($cond, $vals);
             }
-            if ($table->sort != null {
-                $qb->addOrder("$table->sort $table->sortDir");
+            if ($table->sort != null) {
+                $qb->addOrder($table->name . "." . $table->sort . " " .  $table->sortDir);
             }
             if ($amt > 0) {
                 $qb->addLimit($amt, $offset);
@@ -242,7 +242,7 @@ class DbManager {
         
         $qb->addJoin($joinTable, $mainTable->id, $mainFKCol, true, "inner");
         $qb->addCond($joinTable->name . "." . $otherFKCol . " = :id", [$otherID]);
-        $order = $mainTable->name . "." .$mainTable->sort . " " $mainTable->sortDir;
+        $order = $mainTable->name . "." .$mainTable->sort . " " . $mainTable->sortDir;
         $qb->addOrder($order);
         return $this->getReq($qb);
     }
@@ -345,4 +345,3 @@ class DbManager {
         $this->connected = false;
     }
 }
-

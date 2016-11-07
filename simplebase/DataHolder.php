@@ -17,10 +17,10 @@ class DataHolder {
      */
     public $rows  = array();
     
-    /* The database manager to handle the data uploading
-     * @var DbManager
+    /* The model that this is using to upload rows of data
+     * @var Model
      */
-    public $dbm
+    public $model;
 
     /* Constructor sets the columns from input
      * @param $colString: string, comma and space separated string of columns

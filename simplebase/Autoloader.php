@@ -54,4 +54,3 @@ class KobaltAutoloader {
         spl_autoload_register(array(__CLASS__, "loader"));
     }
 } 
-?>

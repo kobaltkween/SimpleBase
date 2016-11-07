@@ -37,7 +37,7 @@ class Controller {
     /* The view generated from the view's name
      * @var object
      */
-     public $view;
+    public $view;
     
     /* One of the four values that the method of the request can have: 
      * GET, POST, PUT, or DELETE
@@ -59,7 +59,7 @@ class Controller {
     /* Whether the view is speaking HTML or JSON
      * @var string
      */
-     public $format
+     public $format;
      
     /* An error message, that describes what has gone wrong
      * @var string
@@ -81,11 +81,6 @@ class Controller {
      * @var string
      */
      public $output = null;
-     
-    /* The view that the controller sends the response to
-     * @var View
-     */
-     public $view;
      
      
 
@@ -381,4 +376,4 @@ class Controller {
         throw new \Exception("Your request isn't in an acceptable format.");
     }
 }
-?>
+

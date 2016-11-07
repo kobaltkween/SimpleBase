@@ -5,11 +5,7 @@ namespace Kobalt\SimpleBase;
  */
 class JSONView extends View {
     
-    /* The rendering method
-     * @param $output: array
-     * @param $code: The response code from the controller
-     * @param $label: The response label from the controller
-     * @return: boolean
+    /* Render view's data out to JSON
      */
     public function render() {
         // Remove header just in case
